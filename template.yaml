@@ -38,6 +38,12 @@ Resources:
             Effect: Allow
             Resource:
             - '*'
+          - Action:
+            - states:SendTaskSuccess
+            - states:SendTaskFailure
+            Effect: Allow
+            Resource: 
+            - '*'
           Version: '2012-10-17'
         PolicyName: DefaultRolePolicy
   InvokeExternalApiFunction:
@@ -82,12 +88,22 @@ Resources:
             Method: post
       Role: !GetAtt DefaultRole.Arn
 
+  ProcessResultFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: process_result.lambda_handler
+      Runtime: python3.9
+      Timeout: 30
+      Policies:
+        - AWSLambdaBasicExecutionRole
+      Role: !GetAtt DefaultRole.Arn
+
   StateMachine:
     Type: AWS::Serverless::StateMachine
     Properties:
       DefinitionUri: ./statemachine/step_function_definition.asl.json
       DefinitionSubstitutions:
         InvokeExternalApiArn: !GetAtt InvokeExternalApiFunction.Arn
-        HandleCallbackArn: !GetAtt HandleCallbackFunction.Arn
+        ProcessResultArn: !GetAtt ProcessResultFunction.Arn
       Name: CallbackStateMachine
       Role: !GetAtt DefaultRole.Arn

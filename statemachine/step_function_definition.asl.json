@@ -11,11 +11,11 @@
             "token.$": "$$.Task.Token"
           }
         },
-        "Next": "HandleCallback"
+        "Next": "ProcessResult"
       },
-      "HandleCallback": {
+      "ProcessResult": {
         "Type": "Task",
-        "Resource": "${HandleCallbackArn}",
+        "Resource": "${ProcessResultArn}",
         "End": true
       }
     }

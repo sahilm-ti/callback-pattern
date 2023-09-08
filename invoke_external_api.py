@@ -1,12 +1,11 @@
 import requests
-import threading
+# import threading
+# def request_task(url, json):
+#     requests.post(url, json=json)
 
-def request_task(url, json):
-    requests.post(url, json=json)
 
-
-def fire_and_forget(url, json):
-    threading.Thread(target=request_task, args=(url, json)).start()
+# def fire_and_forget(url, json):
+#     threading.Thread(target=request_task, args=(url, json)).start()
 
 def lambda_handler(event, context):
     # Extract the callback token from the incoming event
@@ -15,11 +14,11 @@ def lambda_handler(event, context):
     
     # Define the callback URL (API Gateway endpoint)
     callback_url = "https://fxmcaazn53.execute-api.us-east-1.amazonaws.com/Prod/callback"
-    
-    fire_and_forget('https://fxmcaazn53.execute-api.us-east-1.amazonaws.com/Prod/external-api', json={
+    response = requests.post('https://fxmcaazn53.execute-api.us-east-1.amazonaws.com/Prod/external-api', json={
         'callback_url': callback_url,
         'callback_token': callback_token
     })
+    print(f"Received response {response.json}")
     return {
             'statusCode': 200,
             'body': 'Request sent to external API'

@@ -1,10 +1,13 @@
 import json
 import boto3
+import json
 
 def lambda_handler(event, context):
     # Extract the callback token from the incoming event
     print(f"Received {event=} and {context=}")
-    callback_token = event.get('token')
+    body = event.get('body')
+    body_json = json.loads(body)
+    callback_token = body_json.get('token')
     
     if not callback_token:
         return {
@@ -15,10 +18,11 @@ def lambda_handler(event, context):
     sfn_client = boto3.client('stepfunctions')
     
     try:
-        sfn_client.send_task_success(
+        x = sfn_client.send_task_success(
             taskToken=callback_token,
             output=json.dumps({"result": "Task completed successfully"})
         )
+        print(f"Triggered task success {x}")
         return {
             'statusCode': 200,
             'body': json.dumps('Callback successful.')
@@ -26,5 +30,5 @@ def lambda_handler(event, context):
     except Exception as e:
         return {
             'statusCode': 500,
-            'body': json.dumps('Failed to send callback.')
+            'body': json.dumps(f'Failed to send callback because of {e}')
         }
