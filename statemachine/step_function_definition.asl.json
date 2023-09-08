@@ -1,0 +1,23 @@
+{
+    "Comment": "A Step Function implementing the Callback pattern",
+    "StartAt": "InvokeAPI",
+    "States": {
+      "InvokeAPI": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::lambda:invoke.waitForTaskToken",
+        "Parameters": {
+          "FunctionName": "${InvokeExternalApiArn}",
+          "Payload": {
+            "token.$": "$$.Task.Token"
+          }
+        },
+        "Next": "HandleCallback"
+      },
+      "HandleCallback": {
+        "Type": "Task",
+        "Resource": "${HandleCallbackArn}",
+        "End": true
+      }
+    }
+  }
+  

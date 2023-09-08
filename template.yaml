@@ -1,0 +1,93 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: An example SAM template for a Step Function with Callback pattern
+
+Resources:
+  DefaultRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action: sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+            - states.amazonaws.com
+          Sid: ''
+        Version: '2012-10-17'
+      Policies:
+      - PolicyDocument:
+          Statement:
+          - Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+            Effect: Allow
+            Resource: arn:aws:logs:*:*:*
+          - Action:
+            - execute-api:ManageConnections
+            Effect: Allow
+            Resource: arn:aws:execute-api:*:*:*/@connections/*
+          - Action:
+            - states:StartExecution
+            Effect: Allow
+            Resource: arn:aws:states:*:*:stateMachine:*
+          - Action:
+            - lambda:InvokeFunction
+            Effect: Allow
+            Resource:
+            - '*'
+          Version: '2012-10-17'
+        PolicyName: DefaultRolePolicy
+  InvokeExternalApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: invoke_external_api.lambda_handler
+      Runtime: python3.9
+      Timeout: 30
+      Policies:
+        - AWSLambdaBasicExecutionRole
+      Role: !GetAtt DefaultRole.Arn
+
+  HandleCallbackFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handle_callback.lambda_handler
+      Runtime: python3.9
+      Timeout: 30
+      Policies:
+        - AWSLambdaBasicExecutionRole
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /callback
+            Method: post
+      Role: !GetAtt DefaultRole.Arn
+
+  ExternalApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: external_api.lambda_handler
+      Runtime: python3.9
+      Timeout: 30
+      Policies:
+        - AWSLambdaBasicExecutionRole
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /external-api
+            Method: post
+      Role: !GetAtt DefaultRole.Arn
+
+  StateMachine:
+    Type: AWS::Serverless::StateMachine
+    Properties:
+      DefinitionUri: ./statemachine/step_function_definition.asl.json
+      DefinitionSubstitutions:
+        InvokeExternalApiArn: !GetAtt InvokeExternalApiFunction.Arn
+        HandleCallbackArn: !GetAtt HandleCallbackFunction.Arn
+      Name: CallbackStateMachine
+      Role: !GetAtt DefaultRole.Arn
