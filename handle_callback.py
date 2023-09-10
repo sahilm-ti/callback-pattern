@@ -8,6 +8,7 @@ def lambda_handler(event, context):
     body = event.get('body')
     body_json = json.loads(body)
     callback_token = body_json.get('token')
+    data = body_json.get('data')
     
     if not callback_token:
         return {
@@ -20,7 +21,7 @@ def lambda_handler(event, context):
     try:
         x = sfn_client.send_task_success(
             taskToken=callback_token,
-            output=json.dumps({"result": "Task completed successfully"})
+            output=json.dumps({"result": "Task completed successfully", "data": data})
         )
         print(f"Triggered task success {x}")
         return {
